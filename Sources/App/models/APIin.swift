@@ -27,3 +27,8 @@ struct join_trip_in: Decodable{
     var current_long: String
 }
 
+struct update_location_in: Decodable{
+    var user_id: UUID
+    var current_lat: String
+    var current_long: String
+}

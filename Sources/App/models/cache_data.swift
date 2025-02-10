@@ -22,4 +22,6 @@ struct cached_vehicle: Codable {
 struct cached_user: Codable {
     var user_id: UUID
     var IP: String // this may change?
+    var vehicle_id: UUID
+    var trip_id: UUID
 }
