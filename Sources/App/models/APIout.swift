@@ -17,3 +17,7 @@ struct vehicle_location_out: Codable {
     var lat: String
     var long: String
 }
+
+struct is_active_out: Content {
+    var is_active: Bool
+}

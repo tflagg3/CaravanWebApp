@@ -8,6 +8,24 @@ func routes(_ app: Application) throws {
         "Welcome to Caravan!"
     }
     
+    // is_active
+    let is_active = app.grouped("is_active")
+    is_active.post { req in
+        let cache = req.application.cache
+        if let body = req.body.data {
+            let params = try decoder.decode(is_active_in.self, from: body)
+            do {
+                guard let trip: cached_trip = try await cache.get(params.trip_id.description) else {
+                    let output = is_active_out(is_active: false)
+                    return output
+                }
+                let output = is_active_out(is_active: true)
+                return output
+            }
+        }
+        throw Abort(.unauthorized)
+    }
+    
     // send_location
     let send_location = app.grouped("send_location")
     send_location.post { req in

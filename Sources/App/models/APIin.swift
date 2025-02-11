@@ -32,3 +32,7 @@ struct update_location_in: Decodable{
     var current_lat: String
     var current_long: String
 }
+
+struct is_active_in: Decodable {
+    var trip_id: UUID
+}
