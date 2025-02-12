@@ -42,6 +42,7 @@ func routes(_ app: Application) throws {
                     throw Abort(.unauthorized, reason: "Could not find the vehicle")
                 }
                 let new_vehicle = cached_vehicle(name: vehicle.name,
+                                                 vehicle_id: vehicle.vehicle_id,
                                                  members: vehicle.members,
                                                  last_lat: Double(params.current_lat)!,
                                                  last_long: Double(params.current_long)!,
@@ -53,13 +54,29 @@ func routes(_ app: Application) throws {
                 }
                 
                 try await cache.set(params.user_id.description, to: new_user)
-                try await cache.set(user.vehicle_id.description, to: new_vehicle)
+                // try await cache.delete(user.vehicle_id.description)
                 
+            
+                print("setting locaiton of \(vehicle.name) to (\(new_vehicle.last_lat), \(new_vehicle.last_long))")
+                try await cache.set(user.vehicle_id.description, to: new_vehicle)
+                guard let out: cached_vehicle = try await cache.get(user.vehicle_id.description) else {
+                    print("failed to get")
+                    throw Abort(.unauthorized)
+                }
+                print("\(out.name) is at (\(out.last_lat), \(out.last_long))")
+                guard let trip: cached_trip = try await cache.get(user.trip_id.description) else {
+                    throw Abort(.unauthorized, reason: "Could not find the trip")
+                }
                 // now we have to return the locations
                 var vehicle_locations: [vehicle_location_out] = []
-                for vehicle in trip.vehicles {
+                for vehicle_id in trip.vehicles {
+                    guard let vehicle: cached_vehicle = try await cache.get(vehicle_id.description) else {
+                        throw Abort(.unauthorized)
+                    }
                     let vehicle_out = vehicle_location_out(name: vehicle.name, lat: vehicle.last_lat.description, long: vehicle.last_long.description)
-                    vehicle_locations.append(vehicle_out)
+                    if new_user.vehicle_id != vehicle.vehicle_id {
+                        vehicle_locations.append(vehicle_out)
+                    }
                 }
                 let output = update_location_out(vehicles: vehicle_locations)
                 return output
@@ -84,6 +101,7 @@ func routes(_ app: Application) throws {
             
             // create the vehicle
             let vehicle = cached_vehicle(name: params.vehicle_name,
+                                         vehicle_id: params.vehicle_id,
                                          members: [user],
                                          last_lat: Double(params.current_lat)!,
                                          last_long: Double(params.current_long)!,
@@ -92,7 +110,7 @@ func routes(_ app: Application) throws {
             try await cache.set(params.vehicle_id.description, to: vehicle)
             
             // create the trip
-            let trip = cached_trip(vehicles: [vehicle])
+            let trip = cached_trip(vehicles: [vehicle.vehicle_id])
             try await cache.set(params.trip_id.description, to: trip)
             
             // return value of nothing
@@ -122,6 +140,7 @@ func routes(_ app: Application) throws {
                         members.append(vehicle_user)
                     }
                     let new_vehicle = cached_vehicle(name: vehicle.name,
+                                                     vehicle_id: params.vehicle_id,
                                                      members: members,
                                                      last_lat: Double(params.current_lat)!,
                                                      last_long: Double(params.current_long)!,
@@ -132,13 +151,17 @@ func routes(_ app: Application) throws {
                     return "\(user.user_id) joined the trip \(params.trip_id) in the vehicle \(new_vehicle.name)"
                 } else {
                     let new_vehicle = cached_vehicle(name: params.vehicle_name,
+                                                     vehicle_id: params.vehicle_id,
                                                      members: [user],
                                                      last_lat: Double(params.current_lat)!,
                                                      last_long: Double(params.current_long)!,
                                                      last_update_time: Date())
-                    var vehicles = [new_vehicle]
-                    for vehicle in trip.vehicles {
-                        vehicles.append(vehicle)
+                    var vehicles = [new_vehicle.vehicle_id]
+                    for vehicle_id in trip.vehicles {
+//                        guard let vehicle: cached_vehicle = try await cache.get(vehicle_id.description) else {
+//                            throw Abort(.unauthorized)
+//                        }
+                        vehicles.append(vehicle_id)
                     }
                     let new_trip = cached_trip(vehicles: vehicles)
                     try await cache.set(params.vehicle_id.description, to: new_vehicle)

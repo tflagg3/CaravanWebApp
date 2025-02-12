@@ -8,11 +8,12 @@
 import Foundation
 
 struct cached_trip: Codable {
-    var vehicles: [cached_vehicle]
+    var vehicles: [UUID]
 }
 
 struct cached_vehicle: Codable {
     var name: String
+    var vehicle_id: UUID
     var members: [cached_user]
     var last_lat: Double
     var last_long: Double
