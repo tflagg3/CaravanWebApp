@@ -57,13 +57,13 @@ func routes(_ app: Application) throws {
                 // try await cache.delete(user.vehicle_id.description)
                 
             
-                print("setting locaiton of \(vehicle.name) to (\(new_vehicle.last_lat), \(new_vehicle.last_long))")
+                // print("setting locaiton of \(vehicle.name) to (\(new_vehicle.last_lat), \(new_vehicle.last_long))")
                 try await cache.set(user.vehicle_id.description, to: new_vehicle)
                 guard let out: cached_vehicle = try await cache.get(user.vehicle_id.description) else {
                     print("failed to get")
                     throw Abort(.unauthorized)
                 }
-                print("\(out.name) is at (\(out.last_lat), \(out.last_long))")
+                // print("\(out.name) is at (\(out.last_lat), \(out.last_long))")
                 guard let trip: cached_trip = try await cache.get(user.trip_id.description) else {
                     throw Abort(.unauthorized, reason: "Could not find the trip")
                 }
@@ -79,6 +79,7 @@ func routes(_ app: Application) throws {
                     }
                 }
                 let output = update_location_out(vehicles: vehicle_locations)
+                print(output)
                 return output
                 
             }
@@ -169,7 +170,6 @@ func routes(_ app: Application) throws {
                     try await cache.set(params.trip_id.description, to: new_trip)
                     return "\(user.user_id) joined the trip \(params.trip_id) in the vehicle \(new_vehicle.name)"
                 }
-                
                 
                 
                 
